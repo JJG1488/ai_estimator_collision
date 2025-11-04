@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, UserRole } from '@/types';
 
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     // Mock authentication - in production, this would call an API
     setIsLoading(true);
     try {
@@ -80,9 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     companyName: string,
@@ -107,9 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
@@ -117,18 +117,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const updateUser = async (updates: Partial<User>) => {
+  const updateUser = useCallback(async (updates: Partial<User>) => {
     if (!user) return;
 
     const updatedUser = { ...user, ...updates };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
-  };
+  }, [user]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({ user, isLoading, signIn, signUp, signOut, updateUser }),
+    [user, isLoading, signIn, signUp, signOut, updateUser]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signUp, signOut, updateUser }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

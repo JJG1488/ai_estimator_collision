@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,31 +36,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  // Load notifications from storage on mount
-  useEffect(() => {
-    loadNotifications();
-    setupNotificationListeners();
-    checkPermissions();
-
-    return () => {
-      notificationListener.current?.remove();
-      responseListener.current?.remove();
-    };
-  }, []);
-
-  // Update badge count when unread count changes (iOS)
-  useEffect(() => {
-    if (Platform.OS === 'ios') {
-      setBadgeCount(unreadCount);
-    }
-  }, [unreadCount]);
-
-  // Save notifications to storage whenever they change
-  useEffect(() => {
-    saveNotifications();
-  }, [notifications]);
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem(NOTIFICATIONS_KEY);
       if (stored) {
@@ -75,17 +51,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to load notifications:', error);
     }
-  };
+  }, []);
 
-  const saveNotifications = async () => {
+  const saveNotifications = useCallback(async () => {
     try {
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
     } catch (error) {
       console.error('Failed to save notifications:', error);
     }
-  };
+  }, [notifications]);
 
-  const checkPermissions = async () => {
+  const checkPermissions = useCallback(async () => {
     try {
       const { status } = await Notifications.getPermissionsAsync();
       setPermissionsGranted(status === 'granted');
@@ -97,9 +73,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Failed to check permissions:', error);
     }
-  };
+  }, []);
 
-  const setupNotificationListeners = () => {
+  const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notificationId
+          ? { ...n, isRead: true, readAt: new Date() }
+          : n
+      )
+    );
+  }, []);
+
+  const setupNotificationListeners = useCallback(() => {
     // Listener for notifications received while app is foregrounded
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       const newNotification: Notification = {
@@ -134,9 +120,33 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       const notificationId = response.notification.request.identifier;
       markAsRead(notificationId);
     });
-  };
+  }, [markAsRead]);
 
-  const requestPermissions = async (): Promise<boolean> => {
+  // Load notifications from storage on mount
+  useEffect(() => {
+    loadNotifications();
+    setupNotificationListeners();
+    checkPermissions();
+
+    return () => {
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
+    };
+  }, [loadNotifications, setupNotificationListeners, checkPermissions]);
+
+  // Update badge count when unread count changes (iOS)
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      setBadgeCount(unreadCount);
+    }
+  }, [unreadCount]);
+
+  // Save notifications to storage whenever they change
+  useEffect(() => {
+    saveNotifications();
+  }, [notifications, saveNotifications]);
+
+  const requestPermissions = useCallback(async (): Promise<boolean> => {
     const granted = await requestNotificationPermissions();
     setPermissionsGranted(granted);
 
@@ -146,43 +156,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
 
     return granted;
-  };
+  }, []);
 
-  const markAsRead = async (notificationId: string): Promise<void> => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notificationId
-          ? { ...n, isRead: true, readAt: new Date() }
-          : n
-      )
-    );
-  };
-
-  const markAllAsRead = async (): Promise<void> => {
+  const markAllAsRead = useCallback(async (): Promise<void> => {
     setNotifications((prev) =>
       prev.map((n) => ({ ...n, isRead: true, readAt: new Date() }))
     );
-  };
+  }, []);
 
-  const clearNotification = async (notificationId: string): Promise<void> => {
+  const clearNotification = useCallback(async (notificationId: string): Promise<void> => {
     setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
-  };
+  }, []);
 
-  const clearAllNotifications = async (): Promise<void> => {
+  const clearAllNotifications = useCallback(async (): Promise<void> => {
     setNotifications([]);
-  };
+  }, []);
 
-  const value: NotificationContextType = {
-    notifications,
-    unreadCount,
-    pushToken,
-    permissionsGranted,
-    requestPermissions,
-    markAsRead,
-    markAllAsRead,
-    clearNotification,
-    clearAllNotifications,
-  };
+  const value = useMemo<NotificationContextType>(
+    () => ({
+      notifications,
+      unreadCount,
+      pushToken,
+      permissionsGranted,
+      requestPermissions,
+      markAsRead,
+      markAllAsRead,
+      clearNotification,
+      clearAllNotifications,
+    }),
+    [notifications, unreadCount, pushToken, permissionsGranted, requestPermissions, markAsRead, markAllAsRead, clearNotification, clearAllNotifications]
+  );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }

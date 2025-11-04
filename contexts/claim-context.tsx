@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Claim, Vehicle, Photo, DamageAssessment, Estimate, InsuranceInfo, InsuranceInfoStatus } from '@/types';
 import { useAuth } from './auth-context';
@@ -33,16 +33,7 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
   const [activeClaim, setActiveClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadClaims();
-    } else {
-      setClaims([]);
-      setActiveClaim(null);
-    }
-  }, [user]);
-
-  const loadClaims = async () => {
+  const loadClaims = useCallback(async () => {
     try {
       const claimsData = await AsyncStorage.getItem(STORAGE_KEY);
       if (claimsData) {
@@ -69,18 +60,41 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
-  const saveClaims = async (updatedClaims: Claim[]) => {
+  const saveClaims = useCallback(async (updatedClaims: Claim[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedClaims));
       setClaims(updatedClaims.filter((c) => c.userId === user?.id));
     } catch (error) {
       console.error('Failed to save claims:', error);
     }
-  };
+  }, [user]);
 
-  const createClaim = async (): Promise<Claim> => {
+  const getAllClaims = useCallback(async (): Promise<Claim[]> => {
+    const claimsData = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!claimsData) return [];
+
+    const parsed = JSON.parse(claimsData);
+    return parsed.map((claim: any) => ({
+      ...claim,
+      createdAt: new Date(claim.createdAt),
+      updatedAt: new Date(claim.updatedAt),
+      submittedAt: claim.submittedAt ? new Date(claim.submittedAt) : undefined,
+      reviewedAt: claim.reviewedAt ? new Date(claim.reviewedAt) : undefined,
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadClaims();
+    } else {
+      setClaims([]);
+      setActiveClaim(null);
+    }
+  }, [user, loadClaims]);
+
+  const createClaim = useCallback(async (): Promise<Claim> => {
     if (!user) throw new Error('User not authenticated');
 
     const newClaim: Claim = {
@@ -105,9 +119,9 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     setActiveClaim(newClaim);
 
     return newClaim;
-  };
+  }, [user, getAllClaims, saveClaims]);
 
-  const updateClaim = async (claimId: string, updates: Partial<Claim>) => {
+  const updateClaim = useCallback(async (claimId: string, updates: Partial<Claim>) => {
     const allClaims = await getAllClaims();
     const updatedClaims = allClaims.map((claim) =>
       claim.id === claimId
@@ -120,9 +134,9 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
       const updated = updatedClaims.find((c) => c.id === claimId);
       setActiveClaim(updated || null);
     }
-  };
+  }, [getAllClaims, saveClaims, activeClaim]);
 
-  const deleteClaim = async (claimId: string) => {
+  const deleteClaim = useCallback(async (claimId: string) => {
     const allClaims = await getAllClaims();
     const updatedClaims = allClaims.filter((claim) => claim.id !== claimId);
     await saveClaims(updatedClaims);
@@ -130,39 +144,39 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     if (activeClaim?.id === claimId) {
       setActiveClaim(null);
     }
-  };
+  }, [getAllClaims, saveClaims, activeClaim]);
 
-  const addVehicle = async (claimId: string, vehicle: Vehicle) => {
+  const addVehicle = useCallback(async (claimId: string, vehicle: Vehicle) => {
     await updateClaim(claimId, { vehicle });
-  };
+  }, [updateClaim]);
 
-  const addPhotos = async (claimId: string, photos: Photo[]) => {
+  const addPhotos = useCallback(async (claimId: string, photos: Photo[]) => {
     const claim = claims.find((c) => c.id === claimId);
     if (!claim) return;
 
     const updatedPhotos = [...claim.photos, ...photos];
     await updateClaim(claimId, { photos: updatedPhotos });
-  };
+  }, [claims, updateClaim]);
 
-  const setDamageAssessment = async (claimId: string, assessment: DamageAssessment) => {
+  const setDamageAssessment = useCallback(async (claimId: string, assessment: DamageAssessment) => {
     await updateClaim(claimId, {
       damageAssessment: assessment,
       status: 'pending_review',
     });
-  };
+  }, [updateClaim]);
 
-  const setEstimate = async (claimId: string, estimate: Estimate) => {
+  const setEstimate = useCallback(async (claimId: string, estimate: Estimate) => {
     await updateClaim(claimId, { estimate });
-  };
+  }, [updateClaim]);
 
-  const submitClaim = async (claimId: string) => {
+  const submitClaim = useCallback(async (claimId: string) => {
     await updateClaim(claimId, {
       status: 'pending_review',
       submittedAt: new Date(),
     });
-  };
+  }, [updateClaim]);
 
-  const validateInsuranceInfo = (insuranceInfo?: InsuranceInfo): InsuranceInfoStatus => {
+  const validateInsuranceInfo = useCallback((insuranceInfo?: InsuranceInfo): InsuranceInfoStatus => {
     if (!insuranceInfo) return 'none';
 
     const hasProvider = !!insuranceInfo.provider;
@@ -174,9 +188,9 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     if (hasProvider && hasPolicy) return 'partial';
 
     return 'partial';
-  };
+  }, []);
 
-  const updateInsuranceInfo = async (
+  const updateInsuranceInfo = useCallback(async (
     claimId: string,
     insuranceInfo: InsuranceInfo,
     userId: string
@@ -195,56 +209,47 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
       insuranceInfoStatus: status,
       insuranceInfoLastEditedBy: userId,
     });
-  };
+  }, [claims, validateInsuranceInfo, updateClaim]);
 
-  const flagInsuranceInfo = async (claimId: string, flags: string[]) => {
+  const flagInsuranceInfo = useCallback(async (claimId: string, flags: string[]) => {
     await updateClaim(claimId, {
       insuranceInfoFlags: flags,
       insuranceInfoStatus: 'flagged',
     });
-  };
+  }, [updateClaim]);
 
-  const lockInsuranceInfo = async (claimId: string) => {
+  const lockInsuranceInfo = useCallback(async (claimId: string) => {
     await updateClaim(claimId, {
       insuranceInfoLockedAt: new Date(),
     });
-  };
+  }, [updateClaim]);
 
-  const getAllClaims = async (): Promise<Claim[]> => {
-    const claimsData = await AsyncStorage.getItem(STORAGE_KEY);
-    if (!claimsData) return [];
-
-    const parsed = JSON.parse(claimsData);
-    return parsed.map((claim: any) => ({
-      ...claim,
-      createdAt: new Date(claim.createdAt),
-      updatedAt: new Date(claim.updatedAt),
-      submittedAt: claim.submittedAt ? new Date(claim.submittedAt) : undefined,
-      reviewedAt: claim.reviewedAt ? new Date(claim.reviewedAt) : undefined,
-    }));
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({
+      claims,
+      activeClaim,
+      currentClaim: activeClaim,
+      isLoading,
+      createClaim,
+      updateClaim,
+      deleteClaim,
+      setActiveClaim,
+      addVehicle,
+      addPhotos,
+      setDamageAssessment,
+      setEstimate,
+      submitClaim,
+      updateInsuranceInfo,
+      flagInsuranceInfo,
+      lockInsuranceInfo,
+      validateInsuranceInfo,
+    }),
+    [claims, activeClaim, isLoading, createClaim, updateClaim, deleteClaim, setActiveClaim, addVehicle, addPhotos, setDamageAssessment, setEstimate, submitClaim, updateInsuranceInfo, flagInsuranceInfo, lockInsuranceInfo, validateInsuranceInfo]
+  );
 
   return (
-    <ClaimContext.Provider
-      value={{
-        claims,
-        activeClaim,
-        currentClaim: activeClaim,
-        isLoading,
-        createClaim,
-        updateClaim,
-        deleteClaim,
-        setActiveClaim,
-        addVehicle,
-        addPhotos,
-        setDamageAssessment,
-        setEstimate,
-        submitClaim,
-        updateInsuranceInfo,
-        flagInsuranceInfo,
-        lockInsuranceInfo,
-        validateInsuranceInfo,
-      }}>
+    <ClaimContext.Provider value={value}>
       {children}
     </ClaimContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Conversation,
@@ -41,26 +41,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<{ [conversationId: string]: Message[] }>({});
   const [loading, setLoading] = useState(true);
 
-  // Load conversations and messages from AsyncStorage on mount
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // Save conversations to AsyncStorage whenever they change
-  useEffect(() => {
-    if (!loading) {
-      saveConversations();
-    }
-  }, [conversations]);
-
-  // Save messages to AsyncStorage whenever they change
-  useEffect(() => {
-    if (!loading) {
-      saveMessages();
-    }
-  }, [messages]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [conversationsJson, messagesJson] = await Promise.all([
         AsyncStorage.getItem(CONVERSATIONS_KEY),
@@ -105,25 +86,44 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const saveConversations = async () => {
+  const saveConversations = useCallback(async () => {
     try {
       await AsyncStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
     } catch (error) {
       console.error('Failed to save conversations:', error);
     }
-  };
+  }, [conversations]);
 
-  const saveMessages = async () => {
+  const saveMessages = useCallback(async () => {
     try {
       await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
     } catch (error) {
       console.error('Failed to save messages:', error);
     }
-  };
+  }, [messages]);
 
-  const createConversation = async (
+  // Load conversations and messages from AsyncStorage on mount
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Save conversations to AsyncStorage whenever they change
+  useEffect(() => {
+    if (!loading) {
+      saveConversations();
+    }
+  }, [conversations, loading, saveConversations]);
+
+  // Save messages to AsyncStorage whenever they change
+  useEffect(() => {
+    if (!loading) {
+      saveMessages();
+    }
+  }, [messages, loading, saveMessages]);
+
+  const createConversation = useCallback(async (
     claimId: string,
     participants: { userId: string; userName: string; userRole: UserRole }[]
   ): Promise<Conversation> => {
@@ -144,17 +144,17 @@ export function MessageProvider({ children }: { children: ReactNode }) {
 
     setConversations([...conversations, newConversation]);
     return newConversation;
-  };
+  }, [conversations]);
 
-  const getConversation = (conversationId: string): Conversation | undefined => {
+  const getConversation = useCallback((conversationId: string): Conversation | undefined => {
     return conversations.find((conv) => conv.id === conversationId);
-  };
+  }, [conversations]);
 
-  const getConversationByClaimId = (claimId: string): Conversation | undefined => {
+  const getConversationByClaimId = useCallback((claimId: string): Conversation | undefined => {
     return conversations.find((conv) => conv.claimId === claimId);
-  };
+  }, [conversations]);
 
-  const sendMessage = async (
+  const sendMessage = useCallback(async (
     conversationId: string,
     senderId: string,
     senderRole: UserRole,
@@ -213,13 +213,13 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     );
 
     return newMessage;
-  };
+  }, [getConversation, messages, conversations]);
 
-  const getMessages = (conversationId: string): Message[] => {
+  const getMessages = useCallback((conversationId: string): Message[] => {
     return messages[conversationId] || [];
-  };
+  }, [messages]);
 
-  const markAsRead = async (conversationId: string, userId: string): Promise<void> => {
+  const markAsRead = useCallback(async (conversationId: string, userId: string): Promise<void> => {
     const conversation = getConversation(conversationId);
     if (!conversation) {
       return;
@@ -256,20 +256,20 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     setConversations(
       conversations.map((conv) => (conv.id === conversationId ? updatedConversation : conv))
     );
-  };
+  }, [getConversation, messages, conversations]);
 
-  const getUnreadCount = (conversationId: string, userId: string): number => {
+  const getUnreadCount = useCallback((conversationId: string, userId: string): number => {
     const conversation = getConversation(conversationId);
     return conversation?.unreadCount[userId] || 0;
-  };
+  }, [getConversation]);
 
-  const getTotalUnreadCount = (userId: string): number => {
+  const getTotalUnreadCount = useCallback((userId: string): number => {
     return conversations.reduce((total, conv) => {
       return total + (conv.unreadCount[userId] || 0);
     }, 0);
-  };
+  }, [conversations]);
 
-  const addAttachment = async (messageId: string, attachment: MessageAttachment): Promise<void> => {
+  const addAttachment = useCallback(async (messageId: string, attachment: MessageAttachment): Promise<void> => {
     // Find the message and add the attachment
     const updatedMessages = { ...messages };
 
@@ -286,22 +286,25 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     });
 
     setMessages(updatedMessages);
-  };
+  }, [messages]);
 
-  const value: MessageContextType = {
-    conversations,
-    messages,
-    loading,
-    createConversation,
-    getConversation,
-    getConversationByClaimId,
-    sendMessage,
-    getMessages,
-    markAsRead,
-    getUnreadCount,
-    getTotalUnreadCount,
-    addAttachment,
-  };
+  const value = useMemo<MessageContextType>(
+    () => ({
+      conversations,
+      messages,
+      loading,
+      createConversation,
+      getConversation,
+      getConversationByClaimId,
+      sendMessage,
+      getMessages,
+      markAsRead,
+      getUnreadCount,
+      getTotalUnreadCount,
+      addAttachment,
+    }),
+    [conversations, messages, loading, createConversation, getConversation, getConversationByClaimId, sendMessage, getMessages, markAsRead, getUnreadCount, getTotalUnreadCount, addAttachment]
+  );
 
   return <MessageContext.Provider value={value}>{children}</MessageContext.Provider>;
 }
