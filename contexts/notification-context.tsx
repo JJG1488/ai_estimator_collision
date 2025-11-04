@@ -53,13 +53,25 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const saveNotifications = useCallback(async () => {
+  // Debounce timer for batch saves
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const saveNotifications = useCallback(async (notificationsToSave: Notification[]) => {
     try {
-      await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifications));
+      await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notificationsToSave));
     } catch (error) {
       console.error('Failed to save notifications:', error);
     }
-  }, [notifications]);
+  }, []);
+
+  const debouncedSaveNotifications = useCallback((notificationsToSave: Notification[]) => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      saveNotifications(notificationsToSave);
+    }, 500); // 500ms debounce
+  }, [saveNotifications]);
 
   const checkPermissions = useCallback(async () => {
     try {
@@ -141,10 +153,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [unreadCount]);
 
-  // Save notifications to storage whenever they change
+  // Save notifications to storage whenever they change (debounced)
   useEffect(() => {
-    saveNotifications();
-  }, [notifications, saveNotifications]);
+    if (notifications.length > 0) {
+      debouncedSaveNotifications(notifications);
+    }
+  }, [notifications, debouncedSaveNotifications]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   const requestPermissions = useCallback(async (): Promise<boolean> => {
     const granted = await requestNotificationPermissions();

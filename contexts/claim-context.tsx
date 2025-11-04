@@ -62,27 +62,63 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
+  // Debounce timer for batch saves
+  const saveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const pendingSaveRef = React.useRef<Claim[] | null>(null);
+
   const saveClaims = useCallback(async (updatedClaims: Claim[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedClaims));
       setClaims(updatedClaims.filter((c) => c.userId === user?.id));
+      // Invalidate cache when saving
+      allClaimsCache.current = null;
     } catch (error) {
       console.error('Failed to save claims:', error);
     }
   }, [user]);
 
+  // Debounced save function to batch multiple saves
+  const debouncedSave = useCallback((updatedClaims: Claim[]) => {
+    pendingSaveRef.current = updatedClaims;
+
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(() => {
+      if (pendingSaveRef.current) {
+        saveClaims(pendingSaveRef.current);
+        pendingSaveRef.current = null;
+      }
+    }, 300); // 300ms debounce
+  }, [saveClaims]);
+
+  // Cache for getAllClaims to reduce AsyncStorage reads
+  const allClaimsCache = React.useRef<{ data: Claim[]; timestamp: number } | null>(null);
+  const CACHE_DURATION = 1000; // 1 second cache
+
   const getAllClaims = useCallback(async (): Promise<Claim[]> => {
+    // Check cache first
+    const now = Date.now();
+    if (allClaimsCache.current && now - allClaimsCache.current.timestamp < CACHE_DURATION) {
+      return allClaimsCache.current.data;
+    }
+
     const claimsData = await AsyncStorage.getItem(STORAGE_KEY);
     if (!claimsData) return [];
 
     const parsed = JSON.parse(claimsData);
-    return parsed.map((claim: any) => ({
+    const claims = parsed.map((claim: any) => ({
       ...claim,
       createdAt: new Date(claim.createdAt),
       updatedAt: new Date(claim.updatedAt),
       submittedAt: claim.submittedAt ? new Date(claim.submittedAt) : undefined,
       reviewedAt: claim.reviewedAt ? new Date(claim.reviewedAt) : undefined,
     }));
+
+    // Update cache
+    allClaimsCache.current = { data: claims, timestamp: now };
+    return claims;
   }, []);
 
   useEffect(() => {
@@ -93,6 +129,15 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
       setActiveClaim(null);
     }
   }, [user, loadClaims]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
 
   const createClaim = useCallback(async (): Promise<Claim> => {
     if (!user) throw new Error('User not authenticated');
@@ -122,6 +167,20 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
   }, [user, getAllClaims, saveClaims]);
 
   const updateClaim = useCallback(async (claimId: string, updates: Partial<Claim>) => {
+    // Optimistic update to local state first
+    setClaims(prevClaims => {
+      return prevClaims.map(claim =>
+        claim.id === claimId
+          ? { ...claim, ...updates, updatedAt: new Date() }
+          : claim
+      );
+    });
+
+    if (activeClaim?.id === claimId) {
+      setActiveClaim(prev => prev ? { ...prev, ...updates, updatedAt: new Date() } : null);
+    }
+
+    // Then update AsyncStorage in background
     const allClaims = await getAllClaims();
     const updatedClaims = allClaims.map((claim) =>
       claim.id === claimId
@@ -129,11 +188,6 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
         : claim
     );
     await saveClaims(updatedClaims);
-
-    if (activeClaim?.id === claimId) {
-      const updated = updatedClaims.find((c) => c.id === claimId);
-      setActiveClaim(updated || null);
-    }
   }, [getAllClaims, saveClaims, activeClaim]);
 
   const deleteClaim = useCallback(async (claimId: string) => {

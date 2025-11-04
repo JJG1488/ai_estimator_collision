@@ -88,63 +88,105 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const saveConversations = useCallback(async () => {
+  // Debounce timers for batch saves
+  const conversationsTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const messagesTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const saveConversations = useCallback(async (conversationsToSave: Conversation[]) => {
     try {
-      await AsyncStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
+      await AsyncStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversationsToSave));
     } catch (error) {
       console.error('Failed to save conversations:', error);
     }
-  }, [conversations]);
+  }, []);
 
-  const saveMessages = useCallback(async () => {
+  const debouncedSaveConversations = useCallback((conversationsToSave: Conversation[]) => {
+    if (conversationsTimerRef.current) {
+      clearTimeout(conversationsTimerRef.current);
+    }
+    conversationsTimerRef.current = setTimeout(() => {
+      saveConversations(conversationsToSave);
+    }, 500); // 500ms debounce for messaging
+  }, [saveConversations]);
+
+  const saveMessages = useCallback(async (messagesToSave: { [conversationId: string]: Message[] }) => {
     try {
-      await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+      await AsyncStorage.setItem(MESSAGES_KEY, JSON.stringify(messagesToSave));
     } catch (error) {
       console.error('Failed to save messages:', error);
     }
-  }, [messages]);
+  }, []);
+
+  const debouncedSaveMessages = useCallback((messagesToSave: { [conversationId: string]: Message[] }) => {
+    if (messagesTimerRef.current) {
+      clearTimeout(messagesTimerRef.current);
+    }
+    messagesTimerRef.current = setTimeout(() => {
+      saveMessages(messagesToSave);
+    }, 500); // 500ms debounce for messaging
+  }, [saveMessages]);
 
   // Load conversations and messages from AsyncStorage on mount
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Save conversations to AsyncStorage whenever they change
+  // Save conversations to AsyncStorage whenever they change (debounced)
   useEffect(() => {
     if (!loading) {
-      saveConversations();
+      debouncedSaveConversations(conversations);
     }
-  }, [conversations, loading, saveConversations]);
+  }, [conversations, loading, debouncedSaveConversations]);
 
-  // Save messages to AsyncStorage whenever they change
+  // Save messages to AsyncStorage whenever they change (debounced)
   useEffect(() => {
     if (!loading) {
-      saveMessages();
+      debouncedSaveMessages(messages);
     }
-  }, [messages, loading, saveMessages]);
+  }, [messages, loading, debouncedSaveMessages]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (conversationsTimerRef.current) {
+        clearTimeout(conversationsTimerRef.current);
+      }
+      if (messagesTimerRef.current) {
+        clearTimeout(messagesTimerRef.current);
+      }
+    };
+  }, []);
 
   const createConversation = useCallback(async (
     claimId: string,
     participants: { userId: string; userName: string; userRole: UserRole }[]
   ): Promise<Conversation> => {
-    // Check if conversation already exists for this claim
-    const existing = conversations.find((conv) => conv.claimId === claimId);
-    if (existing) {
-      return existing;
-    }
+    let existingOrNew: Conversation | null = null;
 
-    const newConversation: Conversation = {
-      id: `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-      claimId,
-      participants,
-      unreadCount: {},
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Use functional update to check and create conversation
+    setConversations(prevConversations => {
+      // Check if conversation already exists for this claim
+      const existing = prevConversations.find((conv) => conv.claimId === claimId);
+      if (existing) {
+        existingOrNew = existing;
+        return prevConversations; // No change needed
+      }
 
-    setConversations([...conversations, newConversation]);
-    return newConversation;
-  }, [conversations]);
+      const newConversation: Conversation = {
+        id: `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        claimId,
+        participants,
+        unreadCount: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      existingOrNew = newConversation;
+      return [...prevConversations, newConversation];
+    });
+
+    return existingOrNew!;
+  }, []);
 
   const getConversation = useCallback((conversationId: string): Conversation | undefined => {
     return conversations.find((conv) => conv.id === conversationId);
@@ -162,11 +204,6 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     text: string,
     attachments?: MessageAttachment[]
   ): Promise<Message> => {
-    const conversation = getConversation(conversationId);
-    if (!conversation) {
-      throw new Error('Conversation not found');
-    }
-
     const newMessage: Message = {
       id: `msg_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       conversationId,
@@ -179,84 +216,84 @@ export function MessageProvider({ children }: { children: ReactNode }) {
       createdAt: new Date(),
     };
 
-    // Add message to messages state
-    const conversationMessages = messages[conversationId] || [];
-    setMessages({
-      ...messages,
-      [conversationId]: [...conversationMessages, newMessage],
-    });
+    // Add message to messages state using functional update
+    setMessages(prevMessages => ({
+      ...prevMessages,
+      [conversationId]: [...(prevMessages[conversationId] || []), newMessage],
+    }));
 
     // Update conversation with last message and increment unread counts for other participants
-    const updatedUnreadCount = { ...conversation.unreadCount };
-    conversation.participants.forEach((participant) => {
-      if (participant.userId !== senderId) {
-        updatedUnreadCount[participant.userId] = (updatedUnreadCount[participant.userId] || 0) + 1;
+    setConversations(prevConversations => {
+      return prevConversations.map(conversation => {
+        if (conversation.id !== conversationId) return conversation;
 
-        // Send notification to other participants
-        try {
-          notifyNewMessage(senderName, text, conversationId);
-        } catch (error) {
-          console.error('Failed to send notification:', error);
-        }
-      }
+        const updatedUnreadCount = { ...conversation.unreadCount };
+        conversation.participants.forEach((participant) => {
+          if (participant.userId !== senderId) {
+            updatedUnreadCount[participant.userId] = (updatedUnreadCount[participant.userId] || 0) + 1;
+
+            // Send notification to other participants
+            try {
+              notifyNewMessage(senderName, text, conversationId);
+            } catch (error) {
+              console.error('Failed to send notification:', error);
+            }
+          }
+        });
+
+        return {
+          ...conversation,
+          lastMessage: newMessage,
+          unreadCount: updatedUnreadCount,
+          updatedAt: new Date(),
+        };
+      });
     });
 
-    const updatedConversation: Conversation = {
-      ...conversation,
-      lastMessage: newMessage,
-      unreadCount: updatedUnreadCount,
-      updatedAt: new Date(),
-    };
-
-    setConversations(
-      conversations.map((conv) => (conv.id === conversationId ? updatedConversation : conv))
-    );
-
     return newMessage;
-  }, [getConversation, messages, conversations]);
+  }, []);
 
   const getMessages = useCallback((conversationId: string): Message[] => {
     return messages[conversationId] || [];
   }, [messages]);
 
   const markAsRead = useCallback(async (conversationId: string, userId: string): Promise<void> => {
-    const conversation = getConversation(conversationId);
-    if (!conversation) {
-      return;
-    }
+    // Mark all messages in the conversation as read using functional update
+    setMessages(prevMessages => {
+      const conversationMessages = prevMessages[conversationId] || [];
+      const updatedMessages = conversationMessages.map((msg) => {
+        if (msg.senderId !== userId && !msg.readAt) {
+          return {
+            ...msg,
+            status: 'read' as const,
+            readAt: new Date(),
+          };
+        }
+        return msg;
+      });
 
-    // Mark all messages in the conversation as read
-    const conversationMessages = messages[conversationId] || [];
-    const updatedMessages = conversationMessages.map((msg) => {
-      if (msg.senderId !== userId && !msg.readAt) {
+      return {
+        ...prevMessages,
+        [conversationId]: updatedMessages,
+      };
+    });
+
+    // Reset unread count for this user using functional update
+    setConversations(prevConversations => {
+      return prevConversations.map(conversation => {
+        if (conversation.id !== conversationId) return conversation;
+
+        const updatedUnreadCount = { ...conversation.unreadCount };
+        updatedUnreadCount[userId] = 0;
+
         return {
-          ...msg,
-          status: 'read' as const,
-          readAt: new Date(),
+          ...conversation,
+          unreadCount: updatedUnreadCount,
+          updatedAt: new Date(),
         };
-      }
-      return msg;
+      });
     });
-
-    setMessages({
-      ...messages,
-      [conversationId]: updatedMessages,
-    });
-
-    // Reset unread count for this user
-    const updatedUnreadCount = { ...conversation.unreadCount };
-    updatedUnreadCount[userId] = 0;
-
-    const updatedConversation: Conversation = {
-      ...conversation,
-      unreadCount: updatedUnreadCount,
-      updatedAt: new Date(),
-    };
-
-    setConversations(
-      conversations.map((conv) => (conv.id === conversationId ? updatedConversation : conv))
-    );
-  }, [getConversation, messages, conversations]);
+  }, []);
 
   const getUnreadCount = useCallback((conversationId: string, userId: string): number => {
     const conversation = getConversation(conversationId);
@@ -270,23 +307,25 @@ export function MessageProvider({ children }: { children: ReactNode }) {
   }, [conversations]);
 
   const addAttachment = useCallback(async (messageId: string, attachment: MessageAttachment): Promise<void> => {
-    // Find the message and add the attachment
-    const updatedMessages = { ...messages };
+    // Find the message and add the attachment using functional update
+    setMessages(prevMessages => {
+      const updatedMessages = { ...prevMessages };
 
-    Object.keys(updatedMessages).forEach((convId) => {
-      updatedMessages[convId] = updatedMessages[convId].map((msg) => {
-        if (msg.id === messageId) {
-          return {
-            ...msg,
-            attachments: [...(msg.attachments || []), attachment],
-          };
-        }
-        return msg;
+      Object.keys(updatedMessages).forEach((convId) => {
+        updatedMessages[convId] = updatedMessages[convId].map((msg) => {
+          if (msg.id === messageId) {
+            return {
+              ...msg,
+              attachments: [...(msg.attachments || []), attachment],
+            };
+          }
+          return msg;
+        });
       });
-    });
 
-    setMessages(updatedMessages);
-  }, [messages]);
+      return updatedMessages;
+    });
+  }, []);
 
   const value = useMemo<MessageContextType>(
     () => ({
