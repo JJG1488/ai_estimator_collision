@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Message } from '@/types';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface MessageBubbleProps {
   message: Message;
@@ -10,8 +9,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: MessageBubbleProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
 
   const formatTime = (date: Date) => {
     const hours = date.getHours();
@@ -31,7 +29,7 @@ export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: Mess
       case 'insurance_adjuster':
         return '#FF9500';
       default:
-        return colors.icon;
+        return Colors.icon;
     }
   };
 
@@ -56,7 +54,7 @@ export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: Mess
       ]}>
       {!isOwnMessage && (
         <View style={styles.senderInfo}>
-          <Text style={[styles.senderName, { color: colors.text }]}>{message.senderName}</Text>
+          <Text style={[styles.senderName, { color: Colors.text }]}>{message.senderName}</Text>
           <View
             style={[
               styles.roleBadge,
@@ -74,10 +72,10 @@ export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: Mess
         style={[
           styles.bubble,
           isOwnMessage
-            ? { backgroundColor: colors.tint }
+            ? { backgroundColor: Colors.tint }
             : { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' },
         ]}>
-        <Text style={[styles.messageText, { color: isOwnMessage ? '#fff' : colors.text }]}>
+        <Text style={[styles.messageText, { color: isOwnMessage ? '#fff' : Colors.text }]}>
           {message.text}
         </Text>
 
@@ -101,18 +99,18 @@ export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: Mess
                   <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} />
                 ) : (
                   <>
-                    <Text style={[styles.attachmentIcon, { color: isOwnMessage ? '#fff' : colors.text }]}>
+                    <Text style={[styles.attachmentIcon, { color: isOwnMessage ? '#fff' : Colors.text }]}>
                       {attachment.type === 'pdf' ? '📄' : '📎'}
                     </Text>
                     <Text
-                      style={[styles.attachmentName, { color: isOwnMessage ? '#fff' : colors.text }]}
+                      style={[styles.attachmentName, { color: isOwnMessage ? '#fff' : Colors.text }]}
                       numberOfLines={1}>
                       {attachment.name}
                     </Text>
                     <Text
                       style={[
                         styles.attachmentSize,
-                        { color: isOwnMessage ? 'rgba(255,255,255,0.7)' : colors.icon },
+                        { color: isOwnMessage ? 'rgba(255,255,255,0.7)' : Colors.icon },
                       ]}>
                       {(attachment.size / 1024).toFixed(1)} KB
                     </Text>
@@ -127,7 +125,7 @@ export function MessageBubble({ message, isOwnMessage, onAttachmentPress }: Mess
           <Text
             style={[
               styles.timestamp,
-              { color: isOwnMessage ? 'rgba(255,255,255,0.7)' : colors.icon },
+              { color: isOwnMessage ? 'rgba(255,255,255,0.7)' : Colors.icon },
             ]}>
             {formatTime(message.createdAt)}
           </Text>

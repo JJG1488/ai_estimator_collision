@@ -1,20 +1,18 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function WelcomeScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const router = useRouter();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.emoji}>🚗💥</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Collision Repair AI</Text>
-          <Text style={[styles.tagline, { color: colors.icon }]}>
+          <Text style={[styles.title, { color: Colors.text }]}>Collision Repair AI</Text>
+          <Text style={[styles.tagline, { color: Colors.icon }]}>
             Snap photos, get instant estimates
           </Text>
         </View>
@@ -22,24 +20,24 @@ export default function WelcomeScreen() {
         <View style={styles.features}>
           <View style={styles.feature}>
             <Text style={styles.featureEmoji}>📸</Text>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>AI Photo Analysis</Text>
-            <Text style={[styles.featureText, { color: colors.icon }]}>
+            <Text style={[styles.featureTitle, { color: Colors.text }]}>AI Photo Analysis</Text>
+            <Text style={[styles.featureText, { color: Colors.icon }]}>
               Take photos, our AI detects damage instantly
             </Text>
           </View>
 
           <View style={styles.feature}>
             <Text style={styles.featureEmoji}>💰</Text>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Instant Estimates</Text>
-            <Text style={[styles.featureText, { color: colors.icon }]}>
+            <Text style={[styles.featureTitle, { color: Colors.text }]}>Instant Estimates</Text>
+            <Text style={[styles.featureText, { color: Colors.icon }]}>
               Get insurance-ready repair costs in minutes
             </Text>
           </View>
 
           <View style={styles.feature}>
             <Text style={styles.featureEmoji}>⚡</Text>
-            <Text style={[styles.featureTitle, { color: colors.text }]}>Auto-Approval</Text>
-            <Text style={[styles.featureText, { color: colors.icon }]}>
+            <Text style={[styles.featureTitle, { color: Colors.text }]}>Auto-Approval</Text>
+            <Text style={[styles.featureText, { color: Colors.icon }]}>
               Claims under $5K approved automatically
             </Text>
           </View>
@@ -53,23 +51,23 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.secondaryButton, { borderColor: colors.tint }]}
+            style={[styles.secondaryButton, { borderColor: Colors.tint }]}
             onPress={() => router.push('/(auth)/signup')}>
-            <Text style={[styles.secondaryButtonText, { color: colors.tint }]}>
+            <Text style={[styles.secondaryButtonText, { color: Colors.tint }]}>
               Create Account
             </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.demo}>
-          <Text style={[styles.demoTitle, { color: colors.text }]}>Demo Accounts:</Text>
-          <Text style={[styles.demoText, { color: colors.icon }]}>
+          <Text style={[styles.demoTitle, { color: Colors.text }]}>Demo Accounts:</Text>
+          <Text style={[styles.demoText, { color: Colors.icon }]}>
             Body Shop: shop@example.com
           </Text>
-          <Text style={[styles.demoText, { color: colors.icon }]}>
+          <Text style={[styles.demoText, { color: Colors.icon }]}>
             Adjuster: adjuster@example.com
           </Text>
-          <Text style={[styles.demoText, { color: colors.icon }]}>Password: anything</Text>
+          <Text style={[styles.demoText, { color: Colors.icon }]}>Password: anything</Text>
         </View>
       </View>
     </View>

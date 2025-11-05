@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Claim, Vehicle, Photo, DamageAssessment, Estimate, InsuranceInfo, InsuranceInfoStatus } from '@/types';
 import { useAuth } from './auth-context';
+import { generatePreEstimate } from '@/utils/aiPreEstimate';
 
 interface ClaimContextType {
   claims: Claim[];
@@ -213,8 +214,12 @@ export function ClaimProvider({ children }: { children: React.ReactNode }) {
   }, [claims, updateClaim]);
 
   const setDamageAssessment = useCallback(async (claimId: string, assessment: DamageAssessment) => {
+    // Generate AI pre-estimate automatically when damage is assessed
+    const preEstimate = generatePreEstimate(assessment);
+
     await updateClaim(claimId, {
       damageAssessment: assessment,
+      preEstimate,
       status: 'pending_review',
     });
   }, [updateClaim]);

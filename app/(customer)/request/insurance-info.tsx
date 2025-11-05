@@ -2,15 +2,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/contexts/auth-context';
 import { useClaim } from '@/contexts/claim-context';
 import { InsuranceForm } from '@/components/insurance-form';
 import { InsuranceInfo } from '@/types';
 
 export default function CustomerInsuranceInfoScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const router = useRouter();
   const { user } = useAuth();
   const { currentClaim, updateInsuranceInfo } = useClaim();
@@ -70,8 +68,8 @@ export default function CustomerInsuranceInfoScreen() {
 
   if (!currentClaim) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.text }]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: Colors.background }]}>
+        <Text style={[styles.errorText, { color: Colors.text }]}>
           No active claim found
         </Text>
       </View>
@@ -81,11 +79,11 @@ export default function CustomerInsuranceInfoScreen() {
   const isLocked = !!currentClaim.insuranceInfoLockedAt;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Insurance Information</Text>
-          <Text style={[styles.subtitle, { color: colors.icon }]}>
+          <Text style={[styles.title, { color: Colors.text }]}>Insurance Information</Text>
+          <Text style={[styles.subtitle, { color: Colors.icon }]}>
             {isLocked
               ? 'Insurance information is locked after submission'
               : 'Provide your insurance details (optional but recommended)'}
@@ -95,7 +93,7 @@ export default function CustomerInsuranceInfoScreen() {
         {!isLocked && (
           <View style={[styles.infoCard, { backgroundColor: '#007AFF' + '20', borderColor: '#007AFF' }]}>
             <Text style={[styles.infoTitle, { color: '#007AFF' }]}>💡 Why provide insurance info?</Text>
-            <Text style={[styles.infoText, { color: colors.text }]}>
+            <Text style={[styles.infoText, { color: Colors.text }]}>
               Adding insurance details speeds up the approval process and ensures accurate claim processing.
               You can skip this step and add it later if needed.
             </Text>
@@ -114,7 +112,7 @@ export default function CustomerInsuranceInfoScreen() {
             <TouchableOpacity
               style={[
                 styles.saveButton,
-                { backgroundColor: isValid ? colors.tint : colors.icon },
+                { backgroundColor: isValid ? Colors.tint : Colors.icon },
               ]}
               onPress={handleSave}
               disabled={isSaving || !isValid}>
@@ -124,10 +122,10 @@ export default function CustomerInsuranceInfoScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.skipButton, { borderColor: colors.icon }]}
+              style={[styles.skipButton, { borderColor: Colors.icon }]}
               onPress={handleSkip}
               disabled={isSaving}>
-              <Text style={[styles.skipButtonText, { color: colors.icon }]}>
+              <Text style={[styles.skipButtonText, { color: Colors.icon }]}>
                 Skip for Now
               </Text>
             </TouchableOpacity>
@@ -136,7 +134,7 @@ export default function CustomerInsuranceInfoScreen() {
 
         {isLocked && (
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.tint }]}
+            style={[styles.backButton, { backgroundColor: Colors.tint }]}
             onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>

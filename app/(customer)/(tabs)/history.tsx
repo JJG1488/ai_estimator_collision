@@ -1,14 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/contexts/auth-context';
 import { useClaim } from '@/contexts/claim-context';
 import { Claim } from '@/types';
+import { formatCurrency } from '@/utils/aiPreEstimate';
 
 export default function CustomerHistoryScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const { user } = useAuth();
   const { claims } = useClaim();
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +40,7 @@ export default function CustomerHistoryScreen() {
       case 'draft':
         return '#8E8E93';
       default:
-        return colors.icon;
+        return Colors.icon;
     }
   };
 
@@ -67,17 +66,17 @@ export default function CustomerHistoryScreen() {
   const renderClaimCard = (claim: Claim) => (
     <View
       key={claim.id}
-      style={[styles.claimCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+      style={[styles.claimCard, { backgroundColor: '#f2f2f7' }]}>
       <View style={styles.claimHeader}>
         <View style={styles.claimInfo}>
-          <Text style={[styles.vehicleName, { color: colors.text }]}>
+          <Text style={[styles.vehicleName, { color: Colors.text }]}>
             {claim.vehicle.year} {claim.vehicle.make} {claim.vehicle.model}
           </Text>
-          <Text style={[styles.claimDate, { color: colors.icon }]}>
+          <Text style={[styles.claimDate, { color: Colors.icon }]}>
             Submitted: {claim.createdAt.toLocaleDateString()}
           </Text>
           {claim.reviewedAt && (
-            <Text style={[styles.claimDate, { color: colors.icon }]}>
+            <Text style={[styles.claimDate, { color: Colors.icon }]}>
               Reviewed: {claim.reviewedAt.toLocaleDateString()}
             </Text>
           )}
@@ -91,9 +90,18 @@ export default function CustomerHistoryScreen() {
 
       {claim.assignedBodyShopName && (
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.icon }]}>Body Shop:</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>
+          <Text style={[styles.detailLabel, { color: Colors.icon }]}>Body Shop:</Text>
+          <Text style={[styles.detailValue, { color: Colors.text }]}>
             {claim.assignedBodyShopName}
+          </Text>
+        </View>
+      )}
+
+      {claim.preEstimate && !claim.estimate && (
+        <View style={styles.detailRow}>
+          <Text style={[styles.detailLabel, { color: Colors.icon }]}>AI Pre-Estimate:</Text>
+          <Text style={[styles.detailValue, { color: '#FF9500', fontWeight: '600' }]}>
+            {formatCurrency(claim.preEstimate.range.typical)}
           </Text>
         </View>
       )}
@@ -101,16 +109,16 @@ export default function CustomerHistoryScreen() {
       {claim.estimate && (
         <>
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.icon }]}>Estimate Total:</Text>
-            <Text style={[styles.detailValue, { color: colors.text, fontWeight: '600' }]}>
+            <Text style={[styles.detailLabel, { color: Colors.icon }]}>Final Estimate:</Text>
+            <Text style={[styles.detailValue, { color: Colors.tint, fontWeight: '600' }]}>
               ${claim.estimate.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
           </View>
 
           {claim.insuranceInfo && claim.insuranceInfo.deductible && (
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: colors.icon }]}>Your Deductible:</Text>
-              <Text style={[styles.detailValue, { color: colors.text }]}>
+              <Text style={[styles.detailLabel, { color: Colors.icon }]}>Your Deductible:</Text>
+              <Text style={[styles.detailValue, { color: Colors.text }]}>
                 ${claim.insuranceInfo.deductible.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </Text>
             </View>
@@ -120,8 +128,8 @@ export default function CustomerHistoryScreen() {
 
       {claim.photos && claim.photos.length > 0 && (
         <View style={styles.detailRow}>
-          <Text style={[styles.detailLabel, { color: colors.icon }]}>Photos:</Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>
+          <Text style={[styles.detailLabel, { color: Colors.icon }]}>Photos:</Text>
+          <Text style={[styles.detailValue, { color: Colors.text }]}>
             {claim.photos.length} uploaded
           </Text>
         </View>
@@ -130,19 +138,19 @@ export default function CustomerHistoryScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[
             styles.filterButton,
-            filter === 'all' && { backgroundColor: colors.tint },
-            filter !== 'all' && { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' },
+            filter === 'all' && { backgroundColor: Colors.tint },
+            filter !== 'all' && { backgroundColor: '#f2f2f7' },
           ]}
           onPress={() => setFilter('all')}>
           <Text
             style={[
               styles.filterButtonText,
-              filter === 'all' ? { color: '#fff' } : { color: colors.text },
+              filter === 'all' ? { color: '#fff' } : { color: Colors.text },
             ]}>
             All ({customerClaims.length})
           </Text>
@@ -151,14 +159,14 @@ export default function CustomerHistoryScreen() {
         <TouchableOpacity
           style={[
             styles.filterButton,
-            filter === 'approved' && { backgroundColor: colors.tint },
-            filter !== 'approved' && { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' },
+            filter === 'approved' && { backgroundColor: Colors.tint },
+            filter !== 'approved' && { backgroundColor: '#f2f2f7' },
           ]}
           onPress={() => setFilter('approved')}>
           <Text
             style={[
               styles.filterButtonText,
-              filter === 'approved' ? { color: '#fff' } : { color: colors.text },
+              filter === 'approved' ? { color: '#fff' } : { color: Colors.text },
             ]}>
             Approved ({customerClaims.filter(c => c.status === 'approved').length})
           </Text>
@@ -167,14 +175,14 @@ export default function CustomerHistoryScreen() {
         <TouchableOpacity
           style={[
             styles.filterButton,
-            filter === 'rejected' && { backgroundColor: colors.tint },
-            filter !== 'rejected' && { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' },
+            filter === 'rejected' && { backgroundColor: Colors.tint },
+            filter !== 'rejected' && { backgroundColor: '#f2f2f7' },
           ]}
           onPress={() => setFilter('rejected')}>
           <Text
             style={[
               styles.filterButtonText,
-              filter === 'rejected' ? { color: '#fff' } : { color: colors.text },
+              filter === 'rejected' ? { color: '#fff' } : { color: Colors.text },
             ]}>
             Rejected ({customerClaims.filter(c => c.status === 'rejected').length})
           </Text>
@@ -184,11 +192,11 @@ export default function CustomerHistoryScreen() {
       <ScrollView
         style={styles.scrollView}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.tint} />
         }>
         {filteredClaims.length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyStateText, { color: colors.icon }]}>
+            <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
               {filter === 'all'
                 ? 'No claims yet'
                 : `No ${filter} claims`}

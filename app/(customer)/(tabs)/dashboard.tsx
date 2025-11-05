@@ -2,14 +2,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/contexts/auth-context';
 import { useClaim } from '@/contexts/claim-context';
 import { Claim } from '@/types';
+import { formatCurrency } from '@/utils/aiPreEstimate';
 
 export default function CustomerDashboardScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const { user } = useAuth();
   const { claims } = useClaim();
   const router = useRouter();
@@ -41,7 +40,7 @@ export default function CustomerDashboardScreen() {
       case 'draft':
         return '#8E8E93';
       default:
-        return colors.icon;
+        return Colors.icon;
     }
   };
 
@@ -67,17 +66,17 @@ export default function CustomerDashboardScreen() {
   const renderClaimCard = (claim: Claim) => (
     <TouchableOpacity
       key={claim.id}
-      style={[styles.claimCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}
+      style={[styles.claimCard, { backgroundColor: '#f2f2f7' }]}
       onPress={() => {
         // Navigate to claim status screen
         // router.push(`/(customer)/request/${claim.id}/status`);
       }}>
       <View style={styles.claimHeader}>
         <View style={styles.claimInfo}>
-          <Text style={[styles.vehicleName, { color: colors.text }]}>
+          <Text style={[styles.vehicleName, { color: Colors.text }]}>
             {claim.vehicle.year} {claim.vehicle.make} {claim.vehicle.model}
           </Text>
-          <Text style={[styles.claimDate, { color: colors.icon }]}>
+          <Text style={[styles.claimDate, { color: Colors.icon }]}>
             {claim.createdAt.toLocaleDateString()}
           </Text>
         </View>
@@ -88,19 +87,33 @@ export default function CustomerDashboardScreen() {
         </View>
       </View>
 
-      {claim.assignedBodyShopName && (
+      {claim.bodyShopName && (
         <View style={styles.bodyShopInfo}>
-          <Text style={[styles.bodyShopLabel, { color: colors.icon }]}>Body Shop:</Text>
-          <Text style={[styles.bodyShopName, { color: colors.text }]}>
-            {claim.assignedBodyShopName}
+          <Text style={[styles.bodyShopLabel, { color: Colors.icon }]}>Body Shop:</Text>
+          <Text style={[styles.bodyShopName, { color: Colors.text }]}>
+            {claim.bodyShopName}
+          </Text>
+        </View>
+      )}
+
+      {claim.preEstimate && !claim.estimate && (
+        <View style={styles.preEstimateContainer}>
+          <View style={styles.estimateInfo}>
+            <Text style={[styles.estimateLabel, { color: Colors.icon }]}>AI Pre-Estimate:</Text>
+            <Text style={[styles.estimateAmount, { color: '#FF9500' }]}>
+              {formatCurrency(claim.preEstimate.range.typical)}
+            </Text>
+          </View>
+          <Text style={[styles.estimateNote, { color: Colors.icon }]}>
+            (Pending body shop review)
           </Text>
         </View>
       )}
 
       {claim.estimate && (
         <View style={styles.estimateInfo}>
-          <Text style={[styles.estimateLabel, { color: colors.icon }]}>Estimate:</Text>
-          <Text style={[styles.estimateAmount, { color: colors.text }]}>
+          <Text style={[styles.estimateLabel, { color: Colors.icon }]}>Final Estimate:</Text>
+          <Text style={[styles.estimateAmount, { color: Colors.tint }]}>
             ${claim.estimate.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
           </Text>
         </View>
@@ -110,27 +123,27 @@ export default function CustomerDashboardScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: Colors.background }]}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.tint} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.tint} />
       }>
       <View style={styles.header}>
-        <Text style={[styles.greeting, { color: colors.text }]}>
+        <Text style={[styles.greeting, { color: Colors.text }]}>
           Welcome, {user?.companyName}!
         </Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
+        <Text style={[styles.subtitle, { color: Colors.icon }]}>
           Track your repair estimates
         </Text>
       </View>
 
       {activeClaims.length === 0 && (
         <View style={styles.emptyState}>
-          <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No Active Claims</Text>
-          <Text style={[styles.emptyStateText, { color: colors.icon }]}>
+          <Text style={[styles.emptyStateTitle, { color: Colors.text }]}>No Active Claims</Text>
+          <Text style={[styles.emptyStateText, { color: Colors.icon }]}>
             Start a new repair request to get an estimate
           </Text>
           <TouchableOpacity
-            style={[styles.newRequestButton, { backgroundColor: colors.tint }]}
+            style={[styles.newRequestButton, { backgroundColor: Colors.tint }]}
             onPress={() => router.push('/(customer)/(tabs)/new-request')}>
             <Text style={styles.newRequestButtonText}>New Repair Request</Text>
           </TouchableOpacity>
@@ -139,36 +152,36 @@ export default function CustomerDashboardScreen() {
 
       {activeClaims.length > 0 && (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Active Claims</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.text }]}>Active Claims</Text>
           {activeClaims.map(renderClaimCard)}
         </View>
       )}
 
       <View style={styles.quickActions}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: Colors.text }]}>Quick Actions</Text>
         <TouchableOpacity
-          style={[styles.actionCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}
+          style={[styles.actionCard, { backgroundColor: '#f2f2f7' }]}
           onPress={() => router.push('/(customer)/(tabs)/new-request')}>
-          <View style={[styles.actionIcon, { backgroundColor: colors.tint + '20' }]}>
-            <Text style={[styles.actionIconText, { color: colors.tint }]}>+</Text>
+          <View style={[styles.actionIcon, { backgroundColor: Colors.tint + '20' }]}>
+            <Text style={[styles.actionIconText, { color: Colors.tint }]}>+</Text>
           </View>
           <View style={styles.actionContent}>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>New Repair Request</Text>
-            <Text style={[styles.actionDescription, { color: colors.icon }]}>
+            <Text style={[styles.actionTitle, { color: Colors.text }]}>New Repair Request</Text>
+            <Text style={[styles.actionDescription, { color: Colors.icon }]}>
               Upload photos and get an instant estimate
             </Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}
+          style={[styles.actionCard, { backgroundColor: '#f2f2f7' }]}
           onPress={() => router.push('/(customer)/(tabs)/history')}>
-          <View style={[styles.actionIcon, { backgroundColor: colors.tint + '20' }]}>
-            <Text style={[styles.actionIconText, { color: colors.tint }]}>⏱</Text>
+          <View style={[styles.actionIcon, { backgroundColor: Colors.tint + '20' }]}>
+            <Text style={[styles.actionIconText, { color: Colors.tint }]}>⏱</Text>
           </View>
           <View style={styles.actionContent}>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>View History</Text>
-            <Text style={[styles.actionDescription, { color: colors.icon }]}>
+            <Text style={[styles.actionTitle, { color: Colors.text }]}>View History</Text>
+            <Text style={[styles.actionDescription, { color: Colors.icon }]}>
               See all past repair estimates
             </Text>
           </View>
@@ -269,6 +282,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  preEstimateContainer: {
+    marginBottom: 4,
+  },
   estimateInfo: {
     flexDirection: 'row',
   },
@@ -279,6 +295,11 @@ const styles = StyleSheet.create({
   estimateAmount: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  estimateNote: {
+    fontSize: 12,
+    marginTop: 2,
+    marginLeft: 0,
   },
   quickActions: {
     padding: 16,

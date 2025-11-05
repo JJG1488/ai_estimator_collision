@@ -1,14 +1,12 @@
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMessage } from '@/contexts/message-context';
 import { useAuth } from '@/contexts/auth-context';
 import { ConversationList } from '@/components/conversation-list';
 
 export default function BodyShopMessagesScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const router = useRouter();
   const { conversations } = useMessage();
   const { user } = useAuth();
@@ -23,7 +21,7 @@ export default function BodyShopMessagesScreen() {
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <ConversationList
         conversations={sortedConversations}
         currentUserId={user.id}

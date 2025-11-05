@@ -1,12 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function CustomerSettingsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const { user, signOut } = useAuth();
   const router = useRouter();
 
@@ -30,23 +28,23 @@ export default function CustomerSettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.icon }]}>ACCOUNT</Text>
-        <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <Text style={[styles.sectionTitle, { color: Colors.icon }]}>ACCOUNT</Text>
+        <View style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.icon }]}>Name</Text>
-            <Text style={[styles.value, { color: colors.text }]}>{user?.companyName}</Text>
+            <Text style={[styles.label, { color: Colors.icon }]}>Name</Text>
+            <Text style={[styles.value, { color: Colors.text }]}>{user?.companyName}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.icon }]}>Email</Text>
-            <Text style={[styles.value, { color: colors.text }]}>{user?.email}</Text>
+            <Text style={[styles.label, { color: Colors.icon }]}>Email</Text>
+            <Text style={[styles.value, { color: Colors.text }]}>{user?.email}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.icon }]}>Account Type</Text>
-            <View style={[styles.badge, { backgroundColor: colors.tint }]}>
+            <Text style={[styles.label, { color: Colors.icon }]}>Account Type</Text>
+            <View style={[styles.badge, { backgroundColor: Colors.tint }]}>
               <Text style={styles.badgeText}>Customer</Text>
             </View>
           </View>
@@ -54,8 +52,8 @@ export default function CustomerSettingsScreen() {
             <>
               <View style={styles.divider} />
               <View style={styles.row}>
-                <Text style={[styles.label, { color: colors.icon }]}>Phone</Text>
-                <Text style={[styles.value, { color: colors.text }]}>{user.phone}</Text>
+                <Text style={[styles.label, { color: Colors.icon }]}>Phone</Text>
+                <Text style={[styles.value, { color: Colors.text }]}>{user.phone}</Text>
               </View>
             </>
           )}
@@ -63,63 +61,63 @@ export default function CustomerSettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.icon }]}>SERVICES</Text>
-        <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <Text style={[styles.sectionTitle, { color: Colors.icon }]}>SERVICES</Text>
+        <View style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.serviceInfo}>
-            <Text style={[styles.serviceTitle, { color: colors.text }]}>Free Estimates</Text>
-            <Text style={[styles.serviceDescription, { color: colors.icon }]}>
+            <Text style={[styles.serviceTitle, { color: Colors.text }]}>Free Estimates</Text>
+            <Text style={[styles.serviceDescription, { color: Colors.icon }]}>
               Get unlimited AI-powered repair estimates at no cost
             </Text>
           </View>
           <View style={styles.features}>
-            <Text style={[styles.feature, { color: colors.text }]}>✓ Instant damage assessment</Text>
-            <Text style={[styles.feature, { color: colors.text }]}>✓ Accurate repair pricing</Text>
-            <Text style={[styles.feature, { color: colors.text }]}>✓ Insurance integration</Text>
-            <Text style={[styles.feature, { color: colors.text }]}>✓ Multiple body shop quotes</Text>
+            <Text style={[styles.feature, { color: Colors.text }]}>✓ Instant damage assessment</Text>
+            <Text style={[styles.feature, { color: Colors.text }]}>✓ Accurate repair pricing</Text>
+            <Text style={[styles.feature, { color: Colors.text }]}>✓ Insurance integration</Text>
+            <Text style={[styles.feature, { color: Colors.text }]}>✓ Multiple body shop quotes</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.icon }]}>PREFERENCES</Text>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <Text style={[styles.sectionTitle, { color: Colors.icon }]}>PREFERENCES</Text>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Notifications</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>Enabled</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Notifications</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>Enabled</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Email Updates</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>Enabled</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Email Updates</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>Enabled</Text>
           </View>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.icon }]}>SUPPORT</Text>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <Text style={[styles.sectionTitle, { color: Colors.icon }]}>SUPPORT</Text>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Help Center</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>›</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Help Center</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>›</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Contact Support</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>›</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Contact Support</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>›</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Terms of Service</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>›</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Terms of Service</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>›</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
+        <TouchableOpacity style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
           <View style={styles.row}>
-            <Text style={[styles.label, { color: colors.text }]}>Privacy Policy</Text>
-            <Text style={[styles.value, { color: colors.icon }]}>›</Text>
+            <Text style={[styles.label, { color: Colors.text }]}>Privacy Policy</Text>
+            <Text style={[styles.value, { color: Colors.icon }]}>›</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -133,7 +131,7 @@ export default function CustomerSettingsScreen() {
       </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: colors.icon }]}>
+        <Text style={[styles.footerText, { color: Colors.icon }]}>
           Collision Repair AI v1.0.0
         </Text>
       </View>

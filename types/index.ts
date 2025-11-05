@@ -45,6 +45,9 @@ export interface Photo {
   timestamp: Date;
   width?: number;
   height?: number;
+  fileSize?: number;
+  qualityScore?: number; // 0-100
+  qualityIssues?: string[]; // List of quality issues detected
 }
 
 // Damage Assessment Types
@@ -121,6 +124,27 @@ export interface Estimate {
   formattedEstimate?: string;
 }
 
+// AI Pre-Estimate Types
+export interface PreEstimateRange {
+  low: number;
+  high: number;
+  typical: number;
+}
+
+export interface PreEstimate {
+  id: string;
+  range: PreEstimateRange;
+  confidence: number; // 0-100
+  basedOnDamages: string[]; // List of detected damage areas
+  similarClaimsCount: number;
+  estimatedRepairDays: {
+    min: number;
+    max: number;
+  };
+  generatedAt: Date;
+  disclaimer: string;
+}
+
 // Claim Types
 export type ClaimStatus =
   | 'draft'
@@ -142,7 +166,8 @@ export interface Claim {
   vehicle: Vehicle;
   photos: Photo[];
   damageAssessment?: DamageAssessment;
-  estimate?: Estimate;
+  preEstimate?: PreEstimate; // AI-generated preliminary estimate shown to customer instantly
+  estimate?: Estimate; // Final estimate from body shop
   insuranceInfo?: InsuranceInfo;
   insuranceInfoStatus: InsuranceInfoStatus;
   insuranceInfoLastEditedBy?: string;
@@ -219,6 +244,81 @@ export interface Notification {
   isRead: boolean;
   createdAt: Date;
   readAt?: Date;
+}
+
+// Appointment Types
+export type AppointmentType = 'drop_off' | 'inspection' | 'pickup' | 'delivery';
+export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'rescheduled';
+
+export interface TimeSlot {
+  id: string;
+  date: Date;
+  startTime: string; // "09:00"
+  endTime: string; // "09:30"
+  isAvailable: boolean;
+  maxCapacity: number;
+  currentBookings: number;
+}
+
+export interface LoanerCarRequest {
+  needed: boolean;
+  preferences?: {
+    type?: 'sedan' | 'suv' | 'truck' | 'any';
+    features?: string[];
+  };
+  approved?: boolean;
+  assignedVehicle?: {
+    make: string;
+    model: string;
+    year: number;
+    licensePlate: string;
+  };
+}
+
+export interface Appointment {
+  id: string;
+  claimId: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  bodyShopId: string;
+  bodyShopName: string;
+  type: AppointmentType;
+  status: AppointmentStatus;
+  scheduledDate: Date;
+  timeSlot: {
+    start: string; // "09:00"
+    end: string; // "09:30"
+  };
+  duration: number; // minutes
+  loanerCarRequest?: LoanerCarRequest;
+  deliveryAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  notes?: string;
+  reminderSent?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  confirmedAt?: Date;
+  cancelledAt?: Date;
+  cancellationReason?: string;
+  rescheduledFrom?: string; // Original appointment ID
+}
+
+export interface BodyShopSchedule {
+  bodyShopId: string;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  openTime: string; // "08:00"
+  closeTime: string; // "17:00"
+  slotDuration: number; // minutes (default 30)
+  breakTimes?: {
+    start: string;
+    end: string;
+  }[];
+  maxConcurrentAppointments: number;
 }
 
 // Fraud Detection Types

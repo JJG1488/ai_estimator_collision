@@ -3,14 +3,11 @@ import { useRouter, usePathname } from 'expo-router';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useAuth } from '@/contexts/auth-context';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function Index() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
     console.log('Index useEffect triggered:', {
@@ -22,14 +19,14 @@ export default function Index() {
     });
 
     if (!isLoading) {
-      // Only redirect from index page when there's no user
-      if (pathname === '/' && !user) {
-        console.log('No user on index, navigating to welcome');
+      // Redirect to welcome screen if no user (including after sign out)
+      if (!user) {
+        console.log('No user detected, navigating to welcome');
         router.replace('/(auth)/welcome');
         return;
       }
 
-      // Navigate authenticated users from anywhere to their dashboard
+      // Navigate authenticated users to their appropriate dashboard
       if (user) {
         const isOnAuthScreen = pathname.startsWith('/(auth)');
         const isOnIndex = pathname === '/';
@@ -48,12 +45,12 @@ export default function Index() {
         }
       }
     }
-  }, [user, isLoading, pathname]);
+  }, [user, isLoading, pathname, router]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ActivityIndicator size="large" color={colors.tint} />
-      <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <ActivityIndicator size="large" color={Colors.tint} />
+      <Text style={[styles.loadingText, { color: Colors.text }]}>Loading...</Text>
     </View>
   );
 }

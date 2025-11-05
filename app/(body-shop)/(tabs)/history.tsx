@@ -2,13 +2,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useClaim } from '@/contexts/claim-context';
 import { Claim } from '@/types';
 
 export default function HistoryScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const { claims, setActiveClaim } = useClaim();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,7 +37,7 @@ export default function HistoryScreen() {
       case 'supplement_needed':
         return '#ff9500';
       default:
-        return colors.icon;
+        return Colors.icon;
     }
   };
 
@@ -61,12 +59,12 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.searchContainer}>
         <TextInput
-          style={[styles.searchInput, { color: colors.text, borderColor: colors.icon, backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}
+          style={[styles.searchInput, { color: Colors.text, borderColor: Colors.icon, backgroundColor: '#f2f2f7' }]}
           placeholder="Search claims..."
-          placeholderTextColor={colors.icon}
+          placeholderTextColor={Colors.icon}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -75,7 +73,7 @@ export default function HistoryScreen() {
       <ScrollView style={styles.list}>
         {filteredClaims.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.icon }]}>
+            <Text style={[styles.emptyText, { color: Colors.icon }]}>
               {searchQuery ? 'No claims found matching your search' : 'No claims yet'}
             </Text>
           </View>
@@ -83,15 +81,15 @@ export default function HistoryScreen() {
           filteredClaims.map((claim) => (
             <TouchableOpacity
               key={claim.id}
-              style={[styles.claimCard, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}
+              style={[styles.claimCard, { backgroundColor: '#f2f2f7' }]}
               onPress={() => handleClaimPress(claim)}>
               <View style={styles.claimHeader}>
                 <View style={styles.claimInfo}>
-                  <Text style={[styles.claimVehicle, { color: colors.text }]}>
+                  <Text style={[styles.claimVehicle, { color: Colors.text }]}>
                     {claim.vehicle.year} {claim.vehicle.make} {claim.vehicle.model}
                   </Text>
                   {claim.vehicle.vin && (
-                    <Text style={[styles.claimVin, { color: colors.icon }]}>
+                    <Text style={[styles.claimVin, { color: Colors.icon }]}>
                       VIN: {claim.vehicle.vin}
                     </Text>
                   )}
@@ -103,16 +101,16 @@ export default function HistoryScreen() {
 
               <View style={styles.claimDetails}>
                 <View style={styles.claimDetail}>
-                  <Text style={[styles.detailLabel, { color: colors.icon }]}>Created</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>
+                  <Text style={[styles.detailLabel, { color: Colors.icon }]}>Created</Text>
+                  <Text style={[styles.detailValue, { color: Colors.text }]}>
                     {claim.createdAt.toLocaleDateString()}
                   </Text>
                 </View>
 
                 {claim.submittedAt && (
                   <View style={styles.claimDetail}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Submitted</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>
+                    <Text style={[styles.detailLabel, { color: Colors.icon }]}>Submitted</Text>
+                    <Text style={[styles.detailValue, { color: Colors.text }]}>
                       {claim.submittedAt.toLocaleDateString()}
                     </Text>
                   </View>
@@ -120,8 +118,8 @@ export default function HistoryScreen() {
 
                 {claim.estimate && (
                   <View style={styles.claimDetail}>
-                    <Text style={[styles.detailLabel, { color: colors.icon }]}>Estimate</Text>
-                    <Text style={[styles.detailValue, { color: colors.tint }]}>
+                    <Text style={[styles.detailLabel, { color: Colors.icon }]}>Estimate</Text>
+                    <Text style={[styles.detailValue, { color: Colors.tint }]}>
                       ${claim.estimate.total.toFixed(2)}
                     </Text>
                   </View>
@@ -130,7 +128,7 @@ export default function HistoryScreen() {
 
               {claim.damageAssessment && (
                 <View style={styles.damageInfo}>
-                  <Text style={[styles.damageText, { color: colors.icon }]}>
+                  <Text style={[styles.damageText, { color: Colors.icon }]}>
                     {claim.damageAssessment.detectedDamages.length} damaged{' '}
                     {claim.damageAssessment.detectedDamages.length === 1 ? 'area' : 'areas'}
                   </Text>

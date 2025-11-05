@@ -1,45 +1,43 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function RoleSelectionScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>Who are you?</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
+        <Text style={[styles.title, { color: Colors.text }]}>Who are you?</Text>
+        <Text style={[styles.subtitle, { color: Colors.icon }]}>
           Select your account type to continue
         </Text>
 
         <View style={styles.options}>
           <TouchableOpacity
-            style={[styles.optionCard, { borderColor: colors.tint }]}
+            style={[styles.optionCard, { borderColor: Colors.tint }]}
             onPress={() => router.push('/(auth)/signup')}>
-            <Text style={[styles.optionTitle, { color: colors.text }]}>🔧 Body Shop</Text>
-            <Text style={[styles.optionDescription, { color: colors.icon }]}>
+            <Text style={[styles.optionTitle, { color: Colors.text }]}>🔧 Body Shop</Text>
+            <Text style={[styles.optionDescription, { color: Colors.icon }]}>
               Generate AI-powered estimates and get instant insurance approvals
             </Text>
-            <Text style={[styles.optionPrice, { color: colors.tint }]}>$500/month</Text>
+            <Text style={[styles.optionPrice, { color: Colors.tint }]}>$500/month</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.optionCard, { borderColor: colors.tint }]}
+            style={[styles.optionCard, { borderColor: Colors.tint }]}
             onPress={() => router.push('/(auth)/signup')}>
-            <Text style={[styles.optionTitle, { color: colors.text }]}>🛡️ Insurance Adjuster</Text>
-            <Text style={[styles.optionDescription, { color: colors.icon }]}>
+            <Text style={[styles.optionTitle, { color: Colors.text }]}>🛡️ Insurance Adjuster</Text>
+            <Text style={[styles.optionDescription, { color: Colors.icon }]}>
               Review claims with fraud detection and automated approval workflows
             </Text>
-            <Text style={[styles.optionPrice, { color: colors.tint }]}>$2 per claim</Text>
+            <Text style={[styles.optionPrice, { color: Colors.tint }]}>$2 per claim</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-          <Text style={[styles.loginLink, { color: colors.tint }]}>
+          <Text style={[styles.loginLink, { color: Colors.tint }]}>
             Already have an account? Sign In
           </Text>
         </TouchableOpacity>

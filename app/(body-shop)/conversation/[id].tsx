@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMessage } from '@/contexts/message-context';
 import { useAuth } from '@/contexts/auth-context';
 import { MessageBubble } from '@/components/message-bubble';
@@ -12,8 +11,7 @@ import { ChatInput } from '@/components/chat-input';
 import { MessageAttachment } from '@/types';
 
 export default function BodyShopConversationScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getConversation, getMessages, sendMessage, markAsRead } = useMessage();
@@ -189,7 +187,7 @@ export default function BodyShopConversationScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={[styles.container, { backgroundColor: Colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={100}>
       <FlatList

@@ -1,13 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useClaim } from '@/contexts/claim-context';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function NewRequestScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const router = useRouter();
   const { createClaim, currentClaim } = useClaim();
   const { user } = useAuth();
@@ -51,96 +49,96 @@ export default function NewRequestScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>New Repair Request</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
+        <Text style={[styles.title, { color: Colors.text }]}>New Repair Request</Text>
+        <Text style={[styles.subtitle, { color: Colors.icon }]}>
           Get an instant estimate for your vehicle damage
         </Text>
       </View>
 
       <View style={styles.section}>
-        <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>How It Works</Text>
+        <View style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
+          <Text style={[styles.cardTitle, { color: Colors.text }]}>How It Works</Text>
 
           <View style={styles.step}>
-            <View style={[styles.stepNumber, { backgroundColor: colors.tint }]}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.tint }]}>
               <Text style={styles.stepNumberText}>1</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.text }]}>Vehicle Information</Text>
-              <Text style={[styles.stepDescription, { color: colors.icon }]}>
+              <Text style={[styles.stepTitle, { color: Colors.text }]}>Vehicle Information</Text>
+              <Text style={[styles.stepDescription, { color: Colors.icon }]}>
                 Enter your vehicle details (year, make, model, VIN)
               </Text>
             </View>
           </View>
 
           <View style={styles.step}>
-            <View style={[styles.stepNumber, { backgroundColor: colors.tint }]}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.tint }]}>
               <Text style={styles.stepNumberText}>2</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.text }]}>Insurance Details</Text>
-              <Text style={[styles.stepDescription, { color: colors.icon }]}>
+              <Text style={[styles.stepTitle, { color: Colors.text }]}>Insurance Details</Text>
+              <Text style={[styles.stepDescription, { color: Colors.icon }]}>
                 Provide your insurance information (optional)
               </Text>
             </View>
           </View>
 
           <View style={styles.step}>
-            <View style={[styles.stepNumber, { backgroundColor: colors.tint }]}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.tint }]}>
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.text }]}>Upload Photos</Text>
-              <Text style={[styles.stepDescription, { color: colors.icon }]}>
+              <Text style={[styles.stepTitle, { color: Colors.text }]}>Upload Photos</Text>
+              <Text style={[styles.stepDescription, { color: Colors.icon }]}>
                 Take or upload photos of the damage (4-8 photos recommended)
               </Text>
             </View>
           </View>
 
           <View style={styles.step}>
-            <View style={[styles.stepNumber, { backgroundColor: colors.tint }]}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.tint }]}>
               <Text style={styles.stepNumberText}>4</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.text }]}>AI Analysis</Text>
-              <Text style={[styles.stepDescription, { color: colors.icon }]}>
+              <Text style={[styles.stepTitle, { color: Colors.text }]}>AI Analysis</Text>
+              <Text style={[styles.stepDescription, { color: Colors.icon }]}>
                 Our AI analyzes the damage and generates an estimate
               </Text>
             </View>
           </View>
 
           <View style={styles.step}>
-            <View style={[styles.stepNumber, { backgroundColor: colors.tint }]}>
+            <View style={[styles.stepNumber, { backgroundColor: Colors.tint }]}>
               <Text style={styles.stepNumberText}>5</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.text }]}>Get Estimate</Text>
-              <Text style={[styles.stepDescription, { color: colors.icon }]}>
+              <Text style={[styles.stepTitle, { color: Colors.text }]}>Get Estimate</Text>
+              <Text style={[styles.stepDescription, { color: Colors.icon }]}>
                 Receive a detailed repair estimate within minutes
               </Text>
             </View>
           </View>
         </View>
 
-        <View style={[styles.card, { backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#f2f2f7' }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>What You'll Need</Text>
-          <Text style={[styles.checklistItem, { color: colors.text }]}>✓ Vehicle information (VIN recommended)</Text>
-          <Text style={[styles.checklistItem, { color: colors.text }]}>✓ Clear photos of damage from multiple angles</Text>
-          <Text style={[styles.checklistItem, { color: colors.text }]}>✓ Insurance information (optional)</Text>
-          <Text style={[styles.checklistItem, { color: colors.text }]}>✓ About 5-10 minutes of your time</Text>
+        <View style={[styles.card, { backgroundColor: '#f2f2f7' }]}>
+          <Text style={[styles.cardTitle, { color: Colors.text }]}>What You'll Need</Text>
+          <Text style={[styles.checklistItem, { color: Colors.text }]}>✓ Vehicle information (VIN recommended)</Text>
+          <Text style={[styles.checklistItem, { color: Colors.text }]}>✓ Clear photos of damage from multiple angles</Text>
+          <Text style={[styles.checklistItem, { color: Colors.text }]}>✓ Insurance information (optional)</Text>
+          <Text style={[styles.checklistItem, { color: Colors.text }]}>✓ About 5-10 minutes of your time</Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.startButton, { backgroundColor: colors.tint }]}
+          style={[styles.startButton, { backgroundColor: Colors.tint }]}
           onPress={handleStartNewRequest}>
           <Text style={styles.startButtonText}>Start New Request</Text>
         </TouchableOpacity>
 
         <View style={[styles.infoCard, { backgroundColor: '#007AFF15', borderColor: '#007AFF' }]}>
           <Text style={[styles.infoTitle, { color: '#007AFF' }]}>Free Estimates</Text>
-          <Text style={[styles.infoText, { color: colors.text }]}>
+          <Text style={[styles.infoText, { color: Colors.text }]}>
             Get AI-powered repair estimates at no cost. No commitment required.
           </Text>
         </View>

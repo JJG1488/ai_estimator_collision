@@ -1,13 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useMessage } from '@/contexts/message-context';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function BodyShopTabsLayout() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
   const { getTotalUnreadCount } = useMessage();
   const { user } = useAuth();
 
@@ -16,15 +14,15 @@ export default function BodyShopTabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
-        tabBarInactiveTintColor: colors.icon,
+        tabBarActiveTintColor: Colors.tint,
+        tabBarInactiveTintColor: Colors.icon,
         headerShown: true,
         headerStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: Colors.background,
         },
-        headerTintColor: colors.text,
+        headerTintColor: Colors.text,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: Colors.background,
         },
       }}>
       <Tabs.Screen

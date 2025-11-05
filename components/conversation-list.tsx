@@ -1,7 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { Conversation } from '@/types';
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -16,8 +15,7 @@ export function ConversationList({
   onConversationPress,
   emptyMessage = 'No conversations yet',
 }: ConversationListProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  // Colors now uses light mode only
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -53,12 +51,12 @@ export function ConversationList({
           styles.conversationItem,
           {
             backgroundColor: colorScheme === 'dark' ? '#1c1c1e' : '#fff',
-            borderBottomColor: colors.icon + '20',
+            borderBottomColor: Colors.icon + '20',
           },
         ]}
         onPress={() => onConversationPress(item)}>
         <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
+          <View style={[styles.avatar, { backgroundColor: Colors.tint }]}>
             <Text style={styles.avatarText}>
               {getOtherParticipants(item).charAt(0).toUpperCase()}
             </Text>
@@ -73,13 +71,13 @@ export function ConversationList({
             <Text
               style={[
                 styles.name,
-                { color: colors.text, fontWeight: hasUnread ? '700' : '600' },
+                { color: Colors.text, fontWeight: hasUnread ? '700' : '600' },
               ]}
               numberOfLines={1}>
               {getOtherParticipants(item)}
             </Text>
             {item.lastMessage && (
-              <Text style={[styles.time, { color: colors.icon }]}>
+              <Text style={[styles.time, { color: Colors.icon }]}>
                 {formatTime(item.lastMessage.createdAt)}
               </Text>
             )}
@@ -89,13 +87,13 @@ export function ConversationList({
             <Text
               style={[
                 styles.lastMessage,
-                { color: hasUnread ? colors.text : colors.icon, fontWeight: hasUnread ? '600' : '400' },
+                { color: hasUnread ? Colors.text : Colors.icon, fontWeight: hasUnread ? '600' : '400' },
               ]}
               numberOfLines={2}>
               {item.lastMessage?.text || 'No messages yet'}
             </Text>
             {hasUnread && (
-              <View style={[styles.unreadBadge, { backgroundColor: colors.tint }]}>
+              <View style={[styles.unreadBadge, { backgroundColor: Colors.tint }]}>
                 <Text style={styles.unreadCount}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
               </View>
             )}
@@ -107,8 +105,8 @@ export function ConversationList({
 
   if (conversations.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <Text style={[styles.emptyText, { color: colors.icon }]}>{emptyMessage}</Text>
+      <View style={[styles.emptyContainer, { backgroundColor: Colors.background }]}>
+        <Text style={[styles.emptyText, { color: Colors.icon }]}>{emptyMessage}</Text>
       </View>
     );
   }
@@ -118,7 +116,7 @@ export function ConversationList({
       data={conversations}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
-      style={{ backgroundColor: colors.background }}
+      style={{ backgroundColor: Colors.background }}
       contentContainerStyle={styles.listContent}
     />
   );
